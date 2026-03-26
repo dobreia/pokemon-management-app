@@ -1,0 +1,107 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$userName = $_SESSION['username'];
+
+$userData = json_decode(file_get_contents("users.json"), true);
+$cardsData = json_decode(file_get_contents("pokemon_data.json"), true);
+
+if (isset($userData[$userName])) {
+    $userBalance = $userData[$userName]['balance'];
+    if($userName == "Admin"){
+        $userEmail = "";
+    }
+    else{
+        $userEmail = $userData[$userName]['email'];
+    }
+}
+$sellSuccess = "";
+$newAdminCards = [];
+if (isset($_POST['sellCard'])) {
+    $cardId = $_POST['sellCard'];
+    if (!empty($userData[$userName]["owned_cards"]) && in_array($cardId, $userData[$userName]["owned_cards"])) {
+        $index = array_search($cardId, $userData[$userName]["owned_cards"]);
+
+        unset($userData[$userName]['owned_cards'][$index]);
+        $admin= "Admin";
+        if (!isset($userData[$admin]["owned_cards"])) {
+            $userData[$admin]["owned_cards"] = [];
+        }
+        array_push($userData[$admin]["owned_cards"], $cardId);
+        $userBalance += $cardsData[$cardId]['price'] * 0.9;
+        $sellSuccess = "A kártya sikeresen eladva.";
+
+        $userData[$userName]['balance'] = $userBalance;
+        file_put_contents("users.json", json_encode($userData, JSON_PRETTY_PRINT));
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IKémon | Home</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/user-data.css">
+    <link rel="stylesheet" href="styles/cards.css">
+</head>
+<body>
+<header>
+        <h1><a href="indexLogin.php">IKémon</a> > Felhasználói adatok</h1>
+        <div class="login-container">
+            <h3>Egyenleg: <?php echo $userBalance; ?></h3>
+            <h3><a id="active" href="">Bejelentkezve: <?php echo $userName; ?></a></h3>
+            <h3><a href="logout.php">Kijelentkezés</a></h3>
+        </div>
+    </header>
+</body>
+    <div class="container">
+        <?php 
+            if(!empty($sellSuccess)){
+                echo '<h1 style = "color: green">' . $sellSuccess. '</h1>';
+            }
+        ?>
+        <h2>Felhasználónév: <?php echo $userName ?></h2>
+        <h2>Email cím: <?php echo $userEmail ?></h2>
+        <h2>Egyenleg: <?php echo $userBalance ?></h2>
+        <br>
+        <h2 class="owned_cards">Birtokolt kártyák:</h2>
+        <div id="card-list">
+        <?php 
+        foreach ($cardsData as $cardId => $card) {
+            if (in_array($cardId, $userData[$userName]["owned_cards"])) {
+                echo '<div class="pokemon-card">';
+                echo '<div class="image clr-' . $card['type'] . '">';
+                echo '<img src="' . $card['image'] . '" alt="">';
+                echo '</div>';
+                echo '<div class="details">';
+                echo '<h2><a href="http://localhost/php_beadando/details.php?id=' . $cardId . '">' . $card['name'] . '</a></h2>';
+                echo '<span class="card-type"><span class="icon">🏷</span> ' . $card['type'] . '</span>';
+                echo '<span class="attributes">';
+                echo '<span class="card-hp"><span class="icon">❤</span> ' . $card['hp'] . '</span>';
+                echo '<span class="card-attack"><span class="icon">⚔</span> ' . $card['attack'] . '</span>';
+                echo '<span class="card-defense"><span class="icon">🛡</span> ' . $card['defense'] . '</span>';
+                echo '</span>';
+                echo '</div>';
+                echo '<div class="buy">';
+                echo '<form method="post" action="user_data.php">';
+                echo '<input type="hidden" name="sellCard" value="' . $cardId . '">';
+                echo '<button type="submit" class="invisible-button" style="border: none; padding: 0; background: none; cursor: pointer;color: var(--clr-white);    font-size: 20px;">';
+                echo '<span title = "Ha eladod a kártyát, vissza kapod az ár 90%-át. Ebben az esetben amennyit visszakapsz: '.round($card['price']*0.90).'" class="card-price"><span class="icon">💰</span>Eladás</span>';
+                echo '</button>';
+                echo '</form>';
+                echo '</div>';
+                echo '</div>';
+            }
+        }
+        ?>
+        </div>
+    </div>
+</html>

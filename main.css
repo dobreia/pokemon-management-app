@@ -1,0 +1,38 @@
+/* Admin felület form stílusok */
+
+form {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid var(--clr-main);
+    border-radius: 8px;
+    background-color: var(--clr-light);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--clr-main);
+}
+
+input {
+    width: 96%;
+    padding: 8px;
+    margin-bottom: 16px;
+    border: 1px solid var(--clr-main);
+    border-radius: 4px;
+}
+
+button {
+    background-color: var(--clr-main);
+    color: var(--clr-white);
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: var(--clr-highlight);
+}
